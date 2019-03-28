@@ -20,6 +20,7 @@
 #include "tune.h"
 
 #define SUGOV_KTHREAD_PRIORITY	50
+#define IOWAIT_BOOST_MIN	(SCHED_CAPACITY_SCALE / 8)
 
 struct sugov_tunables {
 	struct gov_attr_set attr_set;
@@ -234,7 +235,7 @@ static void sugov_set_iowait_boost(struct sugov_cpu *sg_cpu, u64 time)
 			if (sg_cpu->iowait_boost > sg_cpu->iowait_boost_max)
 				sg_cpu->iowait_boost = sg_cpu->iowait_boost_max;
 		} else {
-			sg_cpu->iowait_boost = sg_cpu->sg_policy->policy->min;
+			sg_cpu->iowait_boost = IOWAIT_BOOST_MIN;
 		}
 	}
 }
@@ -251,7 +252,7 @@ static void sugov_iowait_boost(struct sugov_cpu *sg_cpu, unsigned long *util,
 		sg_cpu->iowait_boost_pending = false;
 	} else {
 		sg_cpu->iowait_boost >>= 1;
-		if (sg_cpu->iowait_boost < sg_cpu->sg_policy->policy->min) {
+		if (sg_cpu->iowait_boost < IOWAIT_BOOST_MIN) {
 			sg_cpu->iowait_boost = 0;
 			return;
 		}
